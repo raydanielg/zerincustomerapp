@@ -17,7 +17,7 @@ android {
     namespace = "com.zerinexpress.app"
     compileSdk = 36
 
-    ndkVersion = "29.0.14206865"
+    ndkVersion = "27.3.13750724"
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true

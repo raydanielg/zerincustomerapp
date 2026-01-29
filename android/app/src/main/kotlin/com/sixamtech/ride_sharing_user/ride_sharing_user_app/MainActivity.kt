@@ -1,4 +1,4 @@
-package com.sixamtech.hexarideuser
+package com.zerinexpress.app
 
 import io.flutter.embedding.android.FlutterActivity
 

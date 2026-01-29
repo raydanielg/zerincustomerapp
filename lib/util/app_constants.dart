@@ -4,7 +4,7 @@ import 'package:ride_sharing_user_app/localization/language_model.dart';
 import 'package:ride_sharing_user_app/util/images.dart';
 
 class AppConstants {
-  static const String appName = 'Zerin Express';
+  static const String appName = 'Zerin Expresss';
   static const String baseUrl = 'https://zerinexpress.com';
   static const double appVersion = 2.9; /// Flutter SDK 3.38.5
   static const String fontFamily = 'SFProText';
