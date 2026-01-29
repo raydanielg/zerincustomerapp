@@ -47,7 +47,14 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
       child: AppBar(
         elevation: 0,
         scrolledUnderElevation: 0,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: Theme.of(context).primaryColor,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(22),
+            bottomRight: Radius.circular(22),
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
         toolbarHeight: 70,
         automaticallyImplyLeading: false,
         title: InkWell(
@@ -72,7 +79,7 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
                   subTitle ?? '',
                   style: textRegular.copyWith(
                     fontSize: fontSize ?? (isHome ?  Dimensions.fontSizeLarge : Dimensions.fontSizeLarge),
-                    color:Get.isDarkMode ? Colors.white.withValues(alpha: 0.8) : Colors.white,
+                    color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.9),
                   ), maxLines: 1,textAlign: TextAlign.start, overflow: TextOverflow.ellipsis,
                 ),
 
@@ -83,7 +90,7 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
                     child: Text(
                       title.tr,
                       style: textRegular.copyWith(
-                        fontSize: fontSize ??   Dimensions.fontSizeLarge , color: Get.isDarkMode ? Colors.white.withValues(alpha: 0.9) : Colors.white,
+                        fontSize: fontSize ??   Dimensions.fontSizeLarge , color: Theme.of(context).colorScheme.onPrimary,
                       ), maxLines: 1,textAlign: TextAlign.start, overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -103,13 +110,13 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
                   return Padding(
                     padding: const EdgeInsets.only(top: Dimensions.paddingSizeExtraSmall),
                     child: Row(mainAxisAlignment: isHome ? MainAxisAlignment.start : MainAxisAlignment.center, children: [
-                      Icon(Icons.place_outlined,color: Get.isDarkMode ? Colors.white.withValues(alpha:0.8) : Colors.white, size: 16),
+                      Icon(Icons.place_outlined,color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.9), size: 16),
                       const SizedBox(width: Dimensions.paddingSizeSeven),
 
                       Flexible(child: Text(
                         locationController.getUserAddress()?.address ?? '',
                         maxLines: 1,overflow: TextOverflow.ellipsis,
-                        style: textRegular.copyWith(color:Get.isDarkMode ? Colors.white.withValues(alpha:0.8) : Colors.white,
+                        style: textRegular.copyWith(color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.9),
                             fontSize: Dimensions.fontSizeExtraSmall),
                       )),
                     ]),
@@ -126,12 +133,36 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
         leading: showBackButton ?
         IconButton(
           icon: const Icon(Icons.arrow_back),
-          color: Get.isDarkMode ? Colors.white.withValues(alpha:0.8) : Colors.white,
+          color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.9),
           onPressed: () => onBackPressed != null ? onBackPressed!() : Navigator.canPop(context) ? Get.back() : Get.offAll(()=> const DashboardScreen()),
         ) :
         Padding(
           padding: const EdgeInsets.all(Dimensions.paddingSize),
-          child: Image.asset(Images.icon,height: Get.height*0.01,width: Get.width*0.01),
+          child: Container(
+            height: 52,
+            width: 52,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.onPrimary,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.black.withValues(alpha: 0.8), width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.18),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: ClipOval(
+              child: Image.asset(
+                Images.logo,
+                height: 52,
+                width: 52,
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
         ),
 
         actions: [

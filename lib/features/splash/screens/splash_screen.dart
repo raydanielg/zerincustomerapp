@@ -1,11 +1,10 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:ride_sharing_user_app/helper/login_helper.dart';
-import 'package:ride_sharing_user_app/util/images.dart';
 import 'package:ride_sharing_user_app/features/splash/controllers/config_controller.dart';
+import 'package:video_player/video_player.dart';
 
 
 class SplashScreen extends StatefulWidget {
@@ -17,35 +16,68 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen> {
   StreamSubscription<List<ConnectivityResult>>? _onConnectivityChanged;
-  late AnimationController _controller;
-  late Animation _animation;
+  VideoPlayerController? _videoController;
+  bool _isConnected = true;
+  bool _videoDone = false;
+  bool _navigated = false;
+  Timer? _fallbackTimer;
 
 
   @override
   void initState() {
     super.initState();
 
-    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 1));
-    _animation = Tween(begin: 0.0, end: 1.0).animate(_controller)
-      ..addListener(() {
-        setState(() {});
-      });
-
-
-    _controller.repeat(max: 1);
-    _controller.forward();
-
     Get.find<ConfigController>().initSharedData();
 
     _checkConnectivity();
+    _initIntroVideo();
+
+    _fallbackTimer = Timer(const Duration(seconds: 12), () {
+      if (!_videoDone) {
+        _videoDone = true;
+        _tryProceed();
+      }
+    });
+  }
+
+  Future<void> _initIntroVideo() async {
+    try {
+      final controller = VideoPlayerController.asset('assets/App INtro.mp4');
+      _videoController = controller;
+      await controller.initialize();
+      if (!mounted) return;
+      await controller.setLooping(false);
+      setState(() {});
+      await controller.play();
+      controller.addListener(() {
+        final value = controller.value;
+        if (!_videoDone && value.isInitialized && !value.isPlaying && value.position >= value.duration) {
+          _videoDone = true;
+          _tryProceed();
+        }
+      });
+    } catch (_) {
+      debugPrint('Intro video failed to initialize/play');
+      _videoDone = true;
+      _tryProceed();
+    }
+  }
+
+  void _tryProceed() {
+    if (_navigated) return;
+    if (!_videoDone) return;
+    if (!_isConnected) return;
+    _navigated = true;
+    LoginHelper().handleIncomingLinks(widget.notificationData, widget.userName);
   }
 
   void _checkConnectivity(){
     bool isFirst = true;
     _onConnectivityChanged = Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> result) {
       bool isConnected = result.contains(ConnectivityResult.wifi) || result.contains(ConnectivityResult.mobile);
+      _isConnected = isConnected;
       if(!isFirst || !isConnected) {
         ScaffoldMessenger.of(Get.context!).removeCurrentSnackBar();
         ScaffoldMessenger.of(Get.context!).hideCurrentSnackBar();
@@ -58,13 +90,12 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           ),
         ));
         if(isConnected) {
-          LoginHelper().handleIncomingLinks(widget.notificationData, widget.userName);
-
+          _tryProceed();
         }
       }else{
         ScaffoldMessenger.of(Get.context!).removeCurrentSnackBar();
         ScaffoldMessenger.of(Get.context!).hideCurrentSnackBar();
-        LoginHelper().handleIncomingLinks(widget.notificationData, widget.userName);
+        _tryProceed();
       }
       isFirst = false;
     });
@@ -74,40 +105,58 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   void dispose() {
-    _controller.dispose();
     _onConnectivityChanged?.cancel();
+    _videoController?.dispose();
+    _fallbackTimer?.cancel();
     super.dispose();
   }
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(color: Theme.of(context).cardColor),
-        alignment: Alignment.bottomCenter,
-        child: Column(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.end, children: [
+      body: SizedBox.expand(
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (_videoController != null && _videoController!.value.isInitialized)
+              FittedBox(
+                fit: BoxFit.cover,
+                child: SizedBox(
+                  width: _videoController!.value.size.width,
+                  height: _videoController!.value.size.height,
+                  child: VideoPlayer(_videoController!),
+                ),
+              )
+            else
+              Container(color: Colors.black),
 
-          Stack(alignment: AlignmentDirectional.bottomCenter, children: [
-
-            Container(
-              transform: Matrix4.translationValues(0, 320 - (320 * double.tryParse(_animation.value.toString())!), 0),
-              child: Column(children: [
-                Opacity(
-                  opacity: _animation.value,
-                  child: Padding(
-                    padding: EdgeInsets.only(left: 120 - ((120 * double.tryParse(_animation.value.toString())!))),
-                    child: SvgPicture.asset(Images.splashSvgLogo),
+            if (_videoController == null || !_videoController!.value.isInitialized)
+              Center(
+                child: SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                   ),
                 ),
-                SizedBox(height: Get.height * 0.25),
-                
-                SvgPicture.asset(Images.splashSvgBackground)
-              ]),
+              ),
+
+            Positioned(
+              right: 16,
+              top: MediaQuery.of(context).padding.top + 12,
+              child: TextButton(
+                onPressed: () {
+                  _videoDone = true;
+                  _tryProceed();
+                },
+                child: Text(
+                  'Skip',
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.9)),
+                ),
+              ),
             ),
-
-          ]),
-
-        ]),
+          ],
+        ),
       ),
     );
   }
