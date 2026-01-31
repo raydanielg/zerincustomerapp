@@ -31,6 +31,9 @@ class _TripScreenState extends State<TripScreen> with SingleTickerProviderStateM
     tabController.addListener((){
       if (!tabController.indexIsChanging){
         Get.find<TripController>().setStatusIndex(tabController.index);
+        if (scrollController.hasClients) {
+          scrollController.jumpTo(0);
+        }
       }
     });
     super.initState();

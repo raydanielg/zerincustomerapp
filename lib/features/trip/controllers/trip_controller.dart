@@ -48,13 +48,18 @@ class TripController extends GetxController implements GetxService {
       update();
     }
     Response response = await tripServiceInterface.getTripList('ride_request', offset, _filterStartDate, _filterEndDate, _filterList[filterIndex], _statusList[statusIndex]);
-    if (response.statusCode == 200 && response.body['date'] != []) {
-      if(offset == 1) {
+    if (response.statusCode == 200) {
+      if (offset == 1) {
         tripModel = TripModel.fromJson(response.body);
-      }else {
-        tripModel?.data!.addAll(TripModel.fromJson(response.body).data!);
-        tripModel?.offset = TripModel.fromJson(response.body).offset;
-        tripModel?.totalSize = TripModel.fromJson(response.body).totalSize;
+        tripModel?.data ??= [];
+      } else {
+        final TripModel newModel = TripModel.fromJson(response.body);
+        tripModel?.data ??= [];
+        if (newModel.data != null && newModel.data!.isNotEmpty) {
+          tripModel?.data!.addAll(newModel.data!);
+        }
+        tripModel?.offset = newModel.offset;
+        tripModel?.totalSize = newModel.totalSize;
       }
     } else {
       ApiChecker.checkApi(response);
