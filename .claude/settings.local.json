@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -Command \"Get-ChildItem -Path ''D:\\A.Projects\\zerincustomerapp-main\\lib'' -Recurse -Filter ''*.dart'' | ForEach-Object { (Get-Content $_FullName -Raw) -replace ''util/app_constants\\.dart'', ''core/constants/app_constants.dart'' | Set-Content $_FullName -NoNewline }\")",
+      "Bash(find:*)"
+    ]
+  }
+}
